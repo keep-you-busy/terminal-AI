@@ -4,8 +4,11 @@ import os
 import time
 
 import openai
-from colorama import Fore
 from dotenv import load_dotenv
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.style import Style
+from rich.theme import Theme
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -17,11 +20,21 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
+CUSTOM_THEME = Theme({
+    "info": "dim cyan",
+    "warning": "magenta",
+    "danger": "bold red"
+})
+
+CUSTOM_STYLE = Style(color="steel_blue", blink=True, bold=True)
+
+console = Console(theme=CUSTOM_THEME, style=CUSTOM_STYLE)
+
 OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
 openai.api_key = OPENAI_TOKEN
 
-RETRY_PERIOD = 10
+RETRY_PERIOD = 5
 MODEL = 'gpt-3.5-turbo'
 HEADERS = {
     'Authorization': f'Bearer {OPENAI_TOKEN}',
@@ -64,7 +77,7 @@ def send_message(message):
     """Sending the message from AI to console."""
     logger.debug('Sending the message...')
     try:
-        print(Fore.YELLOW + f'AI: {message}')
+        console.print(Markdown(f'AI: {message}'))
         logger.info('Success!')
         logger.debug(f'Message received: "{message}"')
     except Exception as error:
@@ -78,7 +91,7 @@ def user_input():
     """Takes user input."""
     logger.debug('Taking input...')
     try:
-        user_input = input(Fore.WHITE + 'User: ')
+        user_input = input('User:')
         MESSAGES.append({'role': 'user', 'content': user_input})
         logger.info('Success!')
     except ValueError as error:
