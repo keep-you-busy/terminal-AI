@@ -21,7 +21,7 @@ OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
 
 openai.api_key = OPENAI_TOKEN
 
-RETRY_PERIOD = 5
+RETRY_PERIOD = 10
 MODEL = 'gpt-3.5-turbo'
 HEADERS = {
     'Authorization': f'Bearer {OPENAI_TOKEN}',
