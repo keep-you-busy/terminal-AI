@@ -148,5 +148,5 @@ dmypy.json
 # Logging
 logger.log
 
-# Secret tokens
-.env
+# Ignore secret files
+.secrets.*
