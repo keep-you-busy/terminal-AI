@@ -1,14 +1,14 @@
 import datetime
 import logging
-import os
 import time
 
 import openai
-from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.style import Style
 from rich.theme import Theme
+
+from config.config import settings
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -18,52 +18,24 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-load_dotenv()
+console = Console(
+    theme=Theme(settings.CUSTOM_THEME),
+    style=Style(**settings.CUSTOM_STYLE)
+    )
 
-CUSTOM_THEME = Theme({
-    "info": "dim cyan",
-    "warning": "magenta",
-    "danger": "bold red"
-})
+openai.api_key = settings.OPENAI_TOKEN
 
-CUSTOM_STYLE = Style(color="steel_blue", blink=True, bold=True)
-
-console = Console(theme=CUSTOM_THEME, style=CUSTOM_STYLE)
-
-OPENAI_TOKEN = os.getenv('OPENAI_TOKEN')
-
-openai.api_key = OPENAI_TOKEN
-
-RETRY_PERIOD = 5
-MODEL = 'gpt-3.5-turbo'
-HEADERS = {
-    'Authorization': f'Bearer {OPENAI_TOKEN}',
-    'Content-Type': 'application/json'
-}
-
-MESSAGES = [
-    {
-     'role': 'system',
-     'content': """You are a personal assistant for any user,
-                    who will start interact with you."""
-    },
-    {
-     'role': 'user',
-     'content': """I am your owner with regular everyday issues,
-                    such as finding meaning of life or choosing movie."""
-    },
-    {
-     'role': 'assistant',
-     'content': 'Good day! How can I help you today?'
-    },
-]
+MESSAGES = settings.get('MESSAGES')
 
 
 def check_tokens():
     """Checks all enviroments values"""
     logger.debug('Checking enviroment...')
     names_vars = {
-        'OPENAI_TOKEN': OPENAI_TOKEN,
+        'OPENAI_TOKEN': settings.OPENAI_TOKEN,
+        'MODEL': settings.MODEL,
+        'RETRY_PERIOD': settings.RETRY_PERIOD,
+        'MESSAGES': settings.MESSAGES
     }
     missing_vars = [var for var, value in names_vars.items() if not value]
     if missing_vars:
@@ -77,7 +49,7 @@ def send_message(message):
     """Sending the message from AI to console."""
     logger.debug('Sending the message...')
     try:
-        console.print(Markdown(f'AI: {message}'))
+        console.print(Markdown(f'AI: {message}', style="none"))
         logger.info('Success!')
         logger.debug(f'Message received: "{message}"')
     except Exception as error:
@@ -107,7 +79,7 @@ def get_api_answer(timestamp):
             f'({datetime.datetime.fromtimestamp(timestamp)})'
         )
         response = openai.ChatCompletion.create(
-            model=MODEL,
+            model=settings.get('MODEL'),
             messages=MESSAGES
         )
     except openai.APIError as error:
@@ -140,7 +112,7 @@ def check_response(response):
     return choices
 
 
-def main():
+if __name__ == '__main__':
     check_tokens()
     timestamp = int(time.time())
     new_error = None
@@ -161,9 +133,4 @@ def main():
                 send_message(f'Bot crashed: "{error}"')
             continue
         finally:
-            time.sleep(RETRY_PERIOD)
-
-
-if __name__ == '__main__':
-    load_dotenv()
-    main()
+            time.sleep(settings.get('RETRY_PERIOD'))
