@@ -5,6 +5,7 @@ import time
 import openai
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.style import Style
 from rich.theme import Theme
 
@@ -21,6 +22,12 @@ logger = logging.getLogger(__name__)
 console = Console(
     theme=Theme(settings.CUSTOM_THEME),
     style=Style(**settings.CUSTOM_STYLE)
+    )
+
+progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
     )
 
 openai.api_key = settings.OPENAI_TOKEN
@@ -49,7 +56,7 @@ def send_message(message):
     """Sending the message from AI to console."""
     logger.debug('Sending the message...')
     try:
-        console.print(Markdown(f'AI: {message}', style="none"))
+        console.print('\n ', Markdown(f'AI: {message}', style='none'))
         logger.info('Success!')
         logger.debug(f'Message received: "{message}"')
     except Exception as error:
@@ -63,7 +70,7 @@ def user_input():
     """Takes user input."""
     logger.debug('Taking input...')
     try:
-        user_input = input('User:')
+        user_input = input('\n User: ')
         MESSAGES.append({'role': 'user', 'content': user_input})
         logger.info('Success!')
     except ValueError as error:
@@ -118,19 +125,23 @@ if __name__ == '__main__':
     new_error = None
     while True:
         user_input()
-        try:
-            response = get_api_answer(timestamp)
-            choices = check_response(response)
-            if not choices:
-                raise KeyError('No answer from AI!')
-            ai_response = choices[0]['message']['content']
-            MESSAGES.append({'role': 'assistant', 'content': ai_response})
-            send_message(ai_response)
-            new_error = None
-        except Exception as error:
-            logger.error(error)
-            if new_error != error:
-                send_message(f'Bot crashed: "{error}"')
-            continue
-        finally:
-            time.sleep(settings.get('RETRY_PERIOD'))
+        with progress:
+            task = progress.add_task("[green]Processing...")
+            try:
+                response = get_api_answer(timestamp)
+                choices = check_response(response)
+                if not choices:
+                    raise KeyError('No answer from AI!')
+                ai_response = choices[0]['message']['content']
+                MESSAGES.append({'role': 'assistant', 'content': ai_response})
+                progress.stop()
+                progress.remove_task(task_id=task)
+                send_message(ai_response)
+                new_error = None
+            except Exception as error:
+                logger.error(error)
+                if new_error != error:
+                    send_message(f'Bot crashed: "{error}"')
+                continue
+            finally:
+                time.sleep(settings.get('RETRY_PERIOD'))
