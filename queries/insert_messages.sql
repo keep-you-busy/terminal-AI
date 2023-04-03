@@ -1,0 +1,1 @@
+INSERT INTO MESSAGES (chat_id, role, content) VALUES (%s, %s, %s)

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS MESSAGES (
+   chat_id SERIAL PRIMARY KEY,
+   role VARCHAR(20),
+   content TEXT,
+   timestamp TIMESTAMP DEFAULT NOW()
+ );
