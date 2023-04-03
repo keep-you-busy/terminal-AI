@@ -1,24 +1,6 @@
-MESSAGES:
-- role: system
-  content: You are a personal assistant for any user, who will start interact with
-    you.
-- role: user
-  content: I am your owner with regular everyday issues, such as finding meaning of
-    life or choosing movie.
-- role: assistant
-  content: Good day! How can I help you today?
+default:
 
-MODEL:
-  gpt-3.5-turbo
+development:
 
-RETRY_PERIOD:
-  5
+production:
 
-CUSTOM_THEME:
-  info: dim cyan
-  warning: magenta
-  danger: bold red
-
-CUSTOM_STYLE:
-  color: steel_blue
-  bold: True
