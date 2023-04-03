@@ -73,6 +73,7 @@ def user_input():
         user_input = input('\n User: ')
         MESSAGES.append({'role': 'user', 'content': user_input})
         logger.info('Success!')
+        logger.debug(f'Input received: "{user_input}"')
     except ValueError as error:
         raise ValueError(f'Error user input: {error}')
 
@@ -116,7 +117,7 @@ def check_response(response):
         if not message:
             raise TypeError('Missing message field!')
     logger.info('Success!')
-    return choices
+    return choice['message']['content']
 
 
 if __name__ == '__main__':
@@ -129,10 +130,9 @@ if __name__ == '__main__':
             task = progress.add_task("[green]Processing...")
             try:
                 response = get_api_answer(timestamp)
-                choices = check_response(response)
-                if not choices:
+                ai_response = check_response(response)
+                if not ai_response:
                     raise KeyError('No answer from AI!')
-                ai_response = choices[0]['message']['content']
                 MESSAGES.append({'role': 'assistant', 'content': ai_response})
                 progress.stop()
                 progress.remove_task(task_id=task)
