@@ -140,6 +140,8 @@ if __name__ == '__main__':
                 new_error = None
             except Exception as error:
                 logger.error(error)
+                progress.stop()
+                progress.remove_task(task_id=task)
                 if new_error != error:
                     send_message(f'Bot crashed: "{error}"')
                 continue
