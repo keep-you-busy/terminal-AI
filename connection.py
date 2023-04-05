@@ -15,23 +15,15 @@ insert_to_the_messages = '''INSERT INTO MESSAGES (chat_id, role, content) VALUES
 select_max_chat_id = 'SELECT MAX(chat_id) FROM chat_history;'
 
 
-def executeScriptsFromFile(script_file):
-    connection = None
+def get_scripts_from_file(script_file):
+    """Get SQL script from the location."""
     try:
-        connection = psycopg2.connect(settings.DATABASE_URL)
-        crsr = connection.cursor()
-        with open(script_file, "r") as f:
-            crsr.execute(f.read())
-        connection.commit()
-        crsr.close()
-    except (Exception, psycopg2.DatabaseError) as error:
-        raise psycopg2.DatabaseError(
-            f'Error connection to the database: {error}'
-            )
-    finally:
-        if connection is not None:
-            connection.close()
-
+        fd = open(script_file, 'r')
+        sqlFile = fd.read()
+        fd.close()
+        return sqlFile
+    except FileNotFoundError as error:
+        raise FileNotFoundError(f'Error connection to the script file: {error}')
 
 
 def get_db_init_connection(db_url, db_request):
