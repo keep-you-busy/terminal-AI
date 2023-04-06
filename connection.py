@@ -19,20 +19,28 @@ def get_scripts_from_file(script_file):
     """Get SQL script from the location."""
     try:
         fd = open(script_file, 'r')
-        sqlFile = fd.read()
+        script = fd.read()
         fd.close()
-        return sqlFile
+        return script
     except FileNotFoundError as error:
-        raise FileNotFoundError(f'Error connection to the script file: {error}')
+        raise FileNotFoundError(
+            f'Error connection to the script file: {error}'
+        )
 
 
-def get_db_init_connection(db_url, db_request):
+def get_db_init_connection(script, messages=None):
     """Initial connection to the database."""
     connection = None
     try:
-        connection = psycopg2.connect(db_url)
+        connection = psycopg2.connect(settings.DATABASE_URL)
         crsr = connection.cursor()
-        crsr.execute(db_request)
+        if messages is None:
+            crsr.execute(script)
+        else:
+            crsr.execute(
+                script,
+                [(message['role'], message['content']) for message in messages]
+            )
         connection.commit()
         crsr.close()
     except (Exception, psycopg2.DatabaseError) as error:
@@ -42,17 +50,19 @@ def get_db_init_connection(db_url, db_request):
     finally:
         if connection is not None:
             connection.close()
-            print('Database connection terminated')
 
 
-def get_chat_id(db_url):
+def get_chat_id() -> int:
     """Determinate chat id."""
     connection = None
     try:
-        connection = psycopg2.connect(db_url)
+        connection = psycopg2.connect(settings.DATABASE_URL)
         crsr = connection.cursor()
-        crsr.execute("SELECT MAX(chat_id) FROM chat_history;")
+        crsr.execute("SELECT MAX(chat_id) FROM messages;")
         result = crsr.fetchone()
+        if result[0] is None:
+            return 1
+        return result[0]
         crsr.close()
     except (Exception, psycopg2.DatabaseError) as error:
         raise psycopg2.DatabaseError(
@@ -61,7 +71,6 @@ def get_chat_id(db_url):
     finally:
         if connection is not None:
             connection.close()
-            return result
 
 
 def make_db_default_values(db_url, script):
@@ -86,26 +95,4 @@ def make_db_default_values(db_url, script):
             print('Database connection terminated')
 
 
-def insert_db_new_values(db_url, script, messages, chat_id):
-    """Create history chat."""
-    connection = None
-    try:
-        connection = psycopg2.connect(db_url)
-        crsr = connection.cursor()
-        for message in messages:
-            role = message['role']
-            content = message['content']
-            crsr.execute(script, (chat_id, role, content))
-        connection.commit()
-        crsr.close()
-    except (Exception, psycopg2.DatabaseError) as error:
-        raise psycopg2.DatabaseError(
-            f'Error connection to the database: {error}'
-            )
-    finally:
-        if connection is not None:
-            connection.close()
-            print('Database connection terminated')
-
-get_db_init_connection(settings.DATABASE_URL, create_if_not_exist)
-make_db_default_values(settings.DATABASE_URL, insert_to_the_messages)
+print(get_chat_id())
