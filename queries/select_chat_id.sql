@@ -1,1 +1,1 @@
-SELECT MAX(chat_id) FROM chat_history;
+SELECT MAX(chat_id) FROM messages;
