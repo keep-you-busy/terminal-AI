@@ -35,8 +35,8 @@ openai.api_key = settings.OPENAI_TOKEN
 MESSAGES = settings.get('MESSAGES')
 
 
-def check_tokens():
-    """Checks all enviroments values"""
+def check_env_values():
+    """Checks all important enviroments values."""
     logger.debug('Checking enviroment...')
     names_vars = {
         'OPENAI_TOKEN': settings.OPENAI_TOKEN,
@@ -121,7 +121,7 @@ def check_response(response):
 
 
 if __name__ == '__main__':
-    check_tokens()
+    check_env_values()
     timestamp = int(time.time())
     new_error = None
     while True:
